@@ -28,23 +28,24 @@ int SudokuSolver::GetSquareNumber(int row, int column)
 {
     /*
     
-        1...3 (1) si 1...3 (0) => 1
-        1...3 (1) si 4...6 (1) => 2
-        1...3 (1) si 7...9 (2) => 3
+        1...3 (1) && 1...3 (0) => 1
+        1...3 (1) && 4...6 (1) => 2
+        1...3 (1) && 7...9 (2) => 3
         
-        4...6 (4) si 1...3 (0) => 4
-        4...6 (4) si 4...6 (1) => 5
-        4...6 (4) si 7...9 (2) => 6
+        4...6 (4) && 1...3 (0) => 4
+        4...6 (4) && 4...6 (1) => 5
+        4...6 (4) && 7...9 (2) => 6
 
-        7...9 (7) si 1...3 (0) => 7
-        7...9 (7) si 4...6 (1) => 8
-        7...9 (7) si 7...9 (2) => 9
+        7...9 (7) && 1...3 (0) => 7
+        7...9 (7) && 4...6 (1) => 8
+        7...9 (7) && 7...9 (2) => 9
 
     */
 
-    // return (row - 1) / 3 * 3 + 1 + (column - 1) / 3;
+    return (row - 1) / 3 * 3 + 1 + (column - 1) / 3;
 
     // todo : delete
+    /*
     if (row <= 3)
     {
         if (column <= 3)
@@ -90,6 +91,7 @@ int SudokuSolver::GetSquareNumber(int row, int column)
             return 9;
         }
     }
+    */
 }
 
 bool SudokuSolver::CanPlace(std::pair<int, int> pos, int value)

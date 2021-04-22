@@ -163,8 +163,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		int row = ((int)MouseY - TableUpY) / SquareSize + 1;
 		int column = ((int)MouseX - TableUpX) / SquareSize + 1;
 
-		std::cout << row << ' ' << column << '\n';
-
 		for (int i = 1; i < 10; i++)
 			if (key == GLFW_KEY_0 + i && action == GLFW_PRESS)
 				Sudoku->SetTableValue(column, row, i);
