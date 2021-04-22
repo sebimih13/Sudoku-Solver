@@ -11,10 +11,12 @@
 #include "ResourceManager.h"
 #include "SudokuSolver.h"
 #include "TextRenderer.h"
+#include "Button.h"
 
 // callback
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
 // utility functions
 void Init();
@@ -45,6 +47,16 @@ SudokuSolver* Sudoku;
 // Text Renderer
 TextRenderer* RenderText;
 
+// Buttons
+Button* SolveButton;
+Button* ClearButton;
+
+void DrawButtons();
+
+float TextTimer = 2.0f;
+float Timer = TextTimer;
+bool SudokuError;
+
 int main()
 {
 	// glfw: initialize and configure
@@ -66,6 +78,7 @@ int main()
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetKeyCallback(window, key_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
 	// glad: load all OpenGL function pointers
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -80,8 +93,19 @@ int main()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
-	// initialize application
+	// initialize buffers and shaders
 	Init();
+
+	// configure sudoku solver
+	Sudoku = new SudokuSolver();
+
+	// configure text renderer
+	RenderText = new TextRenderer(SCR_WIDTH, SCR_HEIGHT);
+	RenderText->Load("fonts/Antonio-Bold.ttf", 60);
+
+	// configure buttons
+	SolveButton = new Button(glm::vec2(SCR_WIDTH / 2.0f - 100.0f, 25.0f), glm::vec2(200.0f, 65.0f), glm::vec3(0.5f, 0.5f, 0.5f), "Solve");
+	ClearButton = new Button(glm::vec2(SCR_WIDTH / 2.0f - 100.0f, SCR_HEIGHT - 110.0f), glm::vec2(200.0f, 65.0f), glm::vec3(0.5f, 0.5f, 0.5f), "Clear");
 
 
 	// render loop
@@ -101,7 +125,10 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		Timer = std::min(Timer + (float)deltaTime, TextTimer);
+
 		DrawTable();
+		DrawButtons();
 
 
 		// check and call events and swap the buffers
@@ -131,13 +158,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	// todo : make a button
-	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
-		if (Sudoku->Solve())
-			std::cout << "Solve Sudoku\n";
-		else
-			std::cout << "Impossible Sudoku\n";
-
 	if (InTable())
 	{
 		int row = ((int)MouseY - TableUpY) / SquareSize + 1;
@@ -155,6 +175,20 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 		if (key == GLFW_KEY_BACKSPACE && action == GLFW_PRESS)
 			Sudoku->SetTableValue(column, row, 0);
+	}
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+		SolveButton->SetLeftMouse(true);
+		ClearButton->SetLeftMouse(true);
+	}
+	else
+	{
+		SolveButton->SetLeftMouse(false);
+		ClearButton->SetLeftMouse(false);
 	}
 }
 
@@ -220,18 +254,13 @@ void Init()
 
 	ResourceManager::GetShader("line").Use();
 	ResourceManager::GetShader("line").SetMatrix4f("projection", projection);
-
-	// configure sudoku solver
-	Sudoku = new SudokuSolver();
-
-	// configure text renderer
-	RenderText = new TextRenderer(SCR_WIDTH, SCR_HEIGHT);
-	RenderText->Load("fonts/Antonio-Bold.ttf", 60);
 }
 
 void processInput(GLFWwindow* window)
 {
 	glfwGetCursorPos(window, &MouseX, &MouseY);
+	SolveButton->ProcessInput(MouseX, MouseY);
+	ClearButton->ProcessInput(MouseX, MouseY);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -315,5 +344,32 @@ void DrawTable()
 				RenderText->RenderText(std::to_string(value), 1.0f * TableUpX + (x - 1) * SquareSize + 20.0f, 1.0f * TableUpY + (y - 1) * SquareSize + 10.0f, 1.0f);
 		}
 	}
+}
+
+void DrawButtons()
+{
+	SolveButton->Render(RenderText, glm::vec2(35.0f, 5.0f));
+	ClearButton->Render(RenderText, glm::vec2(35.0f, 5.0f));
+
+	if (SolveButton->IsClicked())
+	{
+		Timer = 0.0f;
+
+		if (Sudoku->Solve())
+			SudokuError = false;
+		else
+			SudokuError = true;
+	}
+
+	if (Timer < TextTimer)
+	{
+		if (SudokuError)
+			RenderText->RenderText("Invalid Sudoku", SCR_WIDTH / 2.0f - 80.0f, 95.0f, 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
+		else
+			RenderText->RenderText("Valid Sudoku", SCR_WIDTH / 2.0f - 80.0f, 95.0f, 0.5f, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+
+	if (ClearButton->IsClicked())
+			Sudoku->Clear();
 }
 
