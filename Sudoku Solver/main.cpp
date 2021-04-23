@@ -138,6 +138,8 @@ int main()
 
 	delete Sudoku;
 	delete RenderText;
+	delete SolveButton;
+	delete ClearButton;
 
 	// glfw: terminate, clearing all previously allocated GLFW resources
 	glfwTerminate();
